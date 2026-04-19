@@ -106,9 +106,10 @@ def run_inference(rgb_b64: str, swir_b64: str, indices: dict, weather: dict, his
 
     response_text = _processor.decode(output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True).strip()
 
+    severity = _parse_severity(response_text)
     return {
-        "severity": _parse_severity(response_text),
-        "confidence": 0.85 if _parse_severity(response_text) != "HEALTHY" else 0.92,
+        "severity": severity,
+        "confidence": 0.85 if severity != "HEALTHY" else 0.92,
         "report": response_text,
         "harvest_signal": _parse_harvest_signal(response_text),
     }
