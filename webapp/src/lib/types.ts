@@ -7,7 +7,7 @@ export interface SatellitePosition {
 export interface SatelliteStatus {
   position: SatellitePosition | null;
   timestamp: string;
-  last_scan: number;
+  last_scan: number | null;
   next_scan_in: number;
 }
 
@@ -54,7 +54,7 @@ export interface Alert {
 
 export type WsMessageType = "initial_state" | "alert" | "satellite_position";
 
-export interface WsMessage {
-  type: WsMessageType;
-  data: Alert | SatelliteStatus | { alerts: Alert[]; status: SatelliteStatus };
-}
+export type WsMessage =
+  | { type: "initial_state"; data: { alerts: Alert[]; status: SatelliteStatus } }
+  | { type: "alert"; data: Alert }
+  | { type: "satellite_position"; data: SatelliteStatus };
