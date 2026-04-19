@@ -2,24 +2,20 @@
 import { useState } from "react";
 import type { Alert } from "@/lib/types";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { useTheme } from "@/hooks/useTheme";
 import { Map } from "@/components/Map";
 import { AlertPanel } from "@/components/AlertPanel";
 import { Header } from "@/components/Header";
 
 const WS_URL = process.env.NEXT_PUBLIC_MONITOR_WS_URL ?? "ws://localhost:8001/ws";
+const THEME = "dark" as const;
 
 export default function Home() {
-  const theme = useTheme();
   const { alerts, satelliteStatus, connected } = useWebSocket(WS_URL);
-  const [focusedAlert, setFocusedAlert] = useState<Alert | null>(null);
-
-  const isDark = theme === "dark";
-  const bg = isDark ? "bg-[#0d1117]" : "bg-white";
+  const [, setFocusedAlert] = useState<Alert | null>(null);
 
   return (
-    <div className={`flex flex-col h-screen w-screen overflow-hidden ${bg}`}>
-      <Header connected={connected} satelliteStatus={satelliteStatus} theme={theme} />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#080d14]">
+      <Header connected={connected} satelliteStatus={satelliteStatus} theme={THEME} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Map (60%) */}
@@ -27,7 +23,6 @@ export default function Home() {
           <Map
             alerts={alerts}
             satelliteStatus={satelliteStatus}
-            theme={theme}
             onAlertClick={setFocusedAlert}
           />
         </div>
@@ -38,7 +33,7 @@ export default function Home() {
             alerts={alerts}
             satelliteStatus={satelliteStatus}
             connected={connected}
-            theme={theme}
+            theme={THEME}
           />
         </div>
       </div>
