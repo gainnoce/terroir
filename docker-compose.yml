@@ -48,6 +48,8 @@ services:
       - NEXT_PUBLIC_MONITOR_WS_URL=ws://localhost:8001/ws
       - NEXT_PUBLIC_MONITOR_API_URL=http://localhost:8001
       - NEXT_PUBLIC_MAPBOX_TOKEN=${MAPBOX_ACCESS_TOKEN}
+    depends_on:
+      - monitor
 
 volumes:
   hf_cache:
