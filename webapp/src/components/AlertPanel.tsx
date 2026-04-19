@@ -23,10 +23,7 @@ function SectionLabel({ children, theme }: { children: React.ReactNode; theme: "
 
 export function AlertPanel({ alerts, satelliteStatus, connected, theme }: AlertPanelProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const isDark = theme === "dark";
-  const bg = isDark ? "bg-[#0d1117]" : "bg-slate-50";
-  const border = isDark ? "border-[#1e2535]" : "border-slate-200";
-  const muted = isDark ? "text-slate-500" : "text-slate-400";
+  const muted = "text-slate-500";
 
   const trendData = alerts
     .slice(0, 5)
@@ -36,9 +33,10 @@ export function AlertPanel({ alerts, satelliteStatus, connected, theme }: AlertP
   const activeCount = alerts.filter((a) => a.severity !== "HEALTHY").length;
 
   return (
-    <div className={`h-full flex flex-col overflow-y-auto border-l ${bg} ${border}`}>
+    <div className="h-full flex flex-col overflow-y-auto bg-transparent">
       {/* Panel header */}
-      <div className={`flex-none flex items-center justify-between px-4 py-3 border-b ${border}`}>
+      <div className="flex-none flex items-center justify-between px-4 py-3"
+           style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <span className={`text-xs font-semibold ${isDark ? "text-slate-200" : "text-slate-700"}`}>
           Intelligence Feed
         </span>
