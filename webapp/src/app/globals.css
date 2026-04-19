@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #FF4500;
+  --satellite: #4a9fff;
+  --critical: #dc2626;
+  --watch: #f97316;
+  --healthy: #22c55e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  overflow: hidden;
+}
