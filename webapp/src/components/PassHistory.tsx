@@ -14,9 +14,6 @@ export function PassHistory({ alerts, theme }: PassHistoryProps) {
 
   return (
     <div className={`rounded border overflow-hidden ${bg}`}>
-      <div className={`px-3 py-2 text-[10px] uppercase tracking-wider ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-        Pass History
-      </div>
       <div className="max-h-32 overflow-y-auto">
         {alerts.length === 0 ? (
           <div className={`px-3 py-2 text-xs ${row}`}>No passes yet</div>
