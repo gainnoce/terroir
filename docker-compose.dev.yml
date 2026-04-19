@@ -1,0 +1,6 @@
+services:
+  inference:
+    deploy:
+      resources: {}
+    environment:
+      - HF_MODEL_PATH=LiquidAI/LFM2.5-VL-450M

@@ -1,0 +1,53 @@
+services:
+  simsat-sim:
+    image: dphi/simsat-sim:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+
+  simsat-api:
+    image: dphi/simsat-api:latest
+    ports:
+      - "9005:9005"
+    depends_on:
+      - simsat-sim
+
+  inference:
+    build: ./inference
+    ports:
+      - "8002:8002"
+    environment:
+      - HF_MODEL_PATH=${HF_MODEL_PATH:-LiquidAI/LFM2.5-VL-1.6B}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+
+  monitor:
+    build: ./monitor
+    ports:
+      - "8001:8001"
+    environment:
+      - SIMSAT_API_URL=http://simsat-api:9005
+      - INFERENCE_URL=http://inference:8002
+    depends_on:
+      - simsat-api
+      - inference
+
+  webapp:
+    build: ./webapp
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_MONITOR_WS_URL=ws://localhost:8001/ws
+      - NEXT_PUBLIC_MONITOR_API_URL=http://localhost:8001
+      - NEXT_PUBLIC_MAPBOX_TOKEN=${MAPBOX_ACCESS_TOKEN}
+
+volumes:
+  hf_cache:
