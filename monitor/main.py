@@ -155,6 +155,7 @@ async def lifespan(app: FastAPI):
     task = asyncio.create_task(polling_loop())
     yield
     task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
 
 
 app = FastAPI(title="Terroir Monitor", lifespan=lifespan)
