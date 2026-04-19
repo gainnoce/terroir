@@ -18,7 +18,7 @@ export function SatelliteStatus({ status, connected, theme }: SatelliteStatusPro
     setCountdown(Math.max(0, 30 - elapsed));
     const interval = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status?.last_scan]);
 
   const bg = isDark ? "bg-[#0d1420] border-[#1a2840]" : "bg-white border-slate-200";
   const text = isDark ? "text-slate-300" : "text-slate-600";

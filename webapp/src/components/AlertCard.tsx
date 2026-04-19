@@ -1,19 +1,8 @@
 "use client";
-import type { Alert, Severity } from "@/lib/types";
+import type { Alert } from "@/lib/types";
+import { SEV_COLORS, SEV_BG } from "@/lib/constants";
 import { ImageSlider } from "./ImageSlider";
 import { WeatherStrip } from "./WeatherStrip";
-
-const SEV_COLORS: Record<Severity, string> = {
-  CRITICAL: "#dc2626",
-  WATCH: "#f97316",
-  HEALTHY: "#22c55e",
-};
-
-const SEV_BG: Record<Severity, string> = {
-  CRITICAL: "rgba(220,38,38,0.1)",
-  WATCH: "rgba(249,115,22,0.1)",
-  HEALTHY: "rgba(34,197,94,0.1)",
-};
 
 interface AlertCardProps {
   alert: Alert;
@@ -38,7 +27,7 @@ export function AlertCard({ alert, theme, isSelected, onClick }: AlertCardProps)
     a.href = url;
     a.download = `terroir-alert-${alert.timestamp.replace(/:/g, "-")}.json`;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   return (

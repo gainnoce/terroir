@@ -1,10 +1,5 @@
-import type { Alert, Severity } from "@/lib/types";
-
-const SEV_COLORS: Record<Severity, string> = {
-  CRITICAL: "#dc2626",
-  WATCH: "#f97316",
-  HEALTHY: "#22c55e",
-};
+import type { Alert } from "@/lib/types";
+import { SEV_COLORS } from "@/lib/constants";
 
 interface PassHistoryProps {
   alerts: Alert[];
