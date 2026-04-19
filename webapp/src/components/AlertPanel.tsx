@@ -37,13 +37,13 @@ export function AlertPanel({ alerts, satelliteStatus, connected, theme }: AlertP
       {/* Panel header */}
       <div className="flex-none flex items-center justify-between px-4 py-3"
            style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <span className={`text-xs font-semibold ${isDark ? "text-slate-200" : "text-slate-700"}`}>
+        <span className="text-xs font-semibold text-slate-200">
           Intelligence Feed
         </span>
         {activeCount > 0 ? (
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-[#f97316] shadow-[0_0_4px_#f97316]" />
-            <span className={`text-[10px] font-mono ${isDark ? "text-orange-400" : "text-orange-500"}`}>
+            <span className="text-[10px] font-mono text-orange-400">
               {activeCount} alert{activeCount !== 1 ? "s" : ""}
             </span>
           </div>
