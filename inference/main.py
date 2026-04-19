@@ -1,3 +1,4 @@
+import binascii
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,13 +6,22 @@ from schemas import AnalyzeRequest, AnalyzeResponse
 import model as model_module
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="Terroir Inference Service")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+_model_ready = False
 
 
 @app.on_event("startup")
 def startup():
-    model_module.load_model()
+    global _model_ready
+    try:
+        model_module.load_model()
+        _model_ready = True
+    except Exception as e:
+        logger.error(f"Model failed to load: {e}")
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
@@ -35,10 +45,12 @@ def analyze(req: AnalyzeRequest):
             indices_summary=req.indices,
             weather_summary=req.weather,
         )
+    except (binascii.Error, OSError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image data: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": model_module.MODEL_PATH}
+    return {"status": "ok" if _model_ready else "degraded", "model": model_module.MODEL_PATH}
