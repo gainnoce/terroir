@@ -8,12 +8,13 @@ Terroir Monitor Service
 - Exposes REST endpoints for initial state load
 """
 import asyncio
-import json
+import base64
 import os
 import time
 import logging
 from contextlib import asynccontextmanager
 from typing import Set
+from functools import partial
 
 import requests
 import numpy as np
@@ -49,9 +50,8 @@ async def broadcast(message: dict):
     connected_clients.difference_update(disconnected)
 
 
-def analyze_with_inference(image_set: dict, indices: dict, weather: dict, lat: float, lon: float, timestamp: str, history: list) -> dict | None:
-    """Call the inference service with satellite data."""
-    import base64
+def _analyze_sync(image_set: dict, indices: dict, weather: dict, lat: float, lon: float, timestamp: str, history: list) -> dict | None:
+    """Synchronous inference call — run in executor to avoid blocking the event loop."""
     payload = {
         "images": {
             "rgb": base64.b64encode(image_set["rgb"]).decode(),
@@ -72,16 +72,21 @@ def analyze_with_inference(image_set: dict, indices: dict, weather: dict, lat: f
         return None
 
 
+def _get_position_sync() -> dict:
+    resp = requests.get(f"{SIMSAT_API}/data/current/position", timeout=10)
+    resp.raise_for_status()
+    return resp.json()
+
+
 async def polling_loop():
     """Main satellite monitoring loop. Runs every POLL_INTERVAL_SECONDS."""
     global satellite_status, active_alerts
+    loop = asyncio.get_event_loop()
 
     while True:
         try:
             # 1. Get current satellite position
-            resp = requests.get(f"{SIMSAT_API}/data/current/position", timeout=10)
-            resp.raise_for_status()
-            pos = resp.json()
+            pos = await loop.run_in_executor(None, _get_position_sync)
             lon, lat, alt = pos["lon-lat-alt"]
             timestamp = pos["timestamp"]
 
@@ -95,28 +100,34 @@ async def polling_loop():
 
             # 2. Fetch images (only over land — ImageUnavailable handles ocean)
             try:
-                rgb_bytes = fetch_image_png(lat, lon, timestamp, "red,green,blue")
-                swir_bytes = fetch_image_png(lat, lon, timestamp, "swir_2,nir,red")
-                arr, meta = fetch_band_array(lat, lon, timestamp, "nir,red,red_edge_1,swir_1,swir_2", n_bands=5)
+                rgb_bytes = await loop.run_in_executor(
+                    None, partial(fetch_image_png, lat, lon, timestamp, "red,green,blue")
+                )
+                swir_bytes = await loop.run_in_executor(
+                    None, partial(fetch_image_png, lat, lon, timestamp, "swir_2,nir,red")
+                )
+                arr, meta = await loop.run_in_executor(
+                    None, partial(fetch_band_array, lat, lon, timestamp, "nir,red,red_edge_1,swir_1,swir_2", 5)
+                )
             except ImageUnavailable:
                 logger.info(f"No image at ({lat:.2f}, {lon:.2f}) — likely ocean")
                 await asyncio.sleep(POLL_INTERVAL_SECONDS)
                 continue
 
-            # 3. Compute spectral indices
+            # 3. Compute spectral indices (CPU-only, fast enough inline)
             indices = compute_all_indices(arr)
 
             # 4. Fetch weather
-            weather = fetch_weather(lat, lon)
+            weather = await loop.run_in_executor(None, partial(fetch_weather, lat, lon))
 
             # 5. Get temporal history
-            loc_key = f"{lat:.3f}_{lon:.3f}"
+            loc_key = HistoryStore.make_key(lat, lon)
             history = history_store.get(loc_key)
 
-            # 6. Run LFM2-VL inference
-            result = analyze_with_inference(
-                {"rgb": rgb_bytes, "swir": swir_bytes},
-                indices, weather, lat, lon, timestamp, history,
+            # 6. Run LFM2-VL inference (blocks up to 120s — must be off the event loop)
+            result = await loop.run_in_executor(
+                None,
+                partial(_analyze_sync, {"rgb": rgb_bytes, "swir": swir_bytes}, indices, weather, lat, lon, timestamp, history),
             )
 
             if result:
@@ -131,8 +142,8 @@ async def polling_loop():
                     "indices": indices,
                     "weather": weather,
                     "cloud_cover": meta["cloud_cover"],
-                    "rgb_image": __import__("base64").b64encode(rgb_bytes).decode(),
-                    "swir_image": __import__("base64").b64encode(swir_bytes).decode(),
+                    "rgb_image": base64.b64encode(rgb_bytes).decode(),
+                    "swir_image": base64.b64encode(swir_bytes).decode(),
                 }
 
                 # Keep only the last 10 alerts
