@@ -29,7 +29,7 @@ export default function Home() {
       </div>
 
       {/* Right: Alert Panel (40%) */}
-      <div className="flex-[0_0_40%] overflow-y-auto">
+      <div className="flex-[0_0_40%] overflow-hidden">
         <AlertPanel
           alerts={alerts}
           satelliteStatus={satelliteStatus}

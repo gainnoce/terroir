@@ -1,3 +1,4 @@
+"use client";
 import type { Alert } from "@/lib/types";
 import { SEV_COLORS } from "@/lib/constants";
 
