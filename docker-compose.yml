@@ -1,17 +1,35 @@
 services:
   simsat-sim:
-    image: dphi/simsat-sim:latest
+    build:
+      context: ./simsat
+      dockerfile: Dockerfile.dashboard
     ports:
       - "8000:8000"
     environment:
       - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
+      - DJANGO_DEBUG=1
+      - DJANGO_SECRET_KEY=dev-secret-key
+    volumes:
+      - dashboard_db:/app
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/api/telemetry/recent/\")'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   simsat-api:
-    image: dphi/simsat-api:latest
+    build:
+      context: ./simsat
+      dockerfile: Dockerfile.sim
     ports:
-      - "9005:9005"
+      - "9005:8000"
+    environment:
+      - DASHBOARD_URL=http://simsat-sim:8000
+      - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
     depends_on:
-      - simsat-sim
+      simsat-sim:
+        condition: service_healthy
 
   inference:
     build: ./inference
@@ -53,3 +71,4 @@ services:
 
 volumes:
   hf_cache:
+  dashboard_db:
